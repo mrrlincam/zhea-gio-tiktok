@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zhea Gio TikTok - ទាញយកវីដេអូ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Kantumruy Pro', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+  <div class="bg-white p-8 rounded-xl shadow-lg max-w-lg w-full">
+    <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">Zhea Gio TikTok</h1>
+    <p class="text-center text-gray-500 text-sm mb-6">បិទភ្ជាប់តំណភ្ជាប់វីដេអូ TikTok ខាងក្រោមដើម្បីទាញយកដោយគ្មាន Logo</p>
+
+    <div class="flex gap-2">
+      <input type="text" id="tiktokUrl" placeholder="បិទភ្ជាប់ Link TikTok នៅទីនេះ..."
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+      <button onclick="fetchVideo()" id="btnFetch"
+        class="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-6 py-3 rounded-lg transition">
+        ទាញយក
+      </button>
+    </div>
+
+    <div id="statusMessage" class="mt-4 text-center text-sm hidden"></div>
+
+    <div id="resultBox" class="mt-6 hidden border-t pt-6">
+      <div class="flex items-center gap-4 mb-4">
+        <img id="videoCover" src="" alt="Cover" class="w-20 h-28 object-cover rounded-lg shadow">
+        <div>
+          <h3 id="videoAuthor" class="font-bold text-gray-800"></h3>
+          <p id="videoTitle" class="text-sm text-gray-600 line-clamp-2 mt-1"></p>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <a id="downloadVideoBtn" href="#" target="_blank" download="zhea_gio_tiktok.mp4"
+          class="w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg transition">
+          ទាញយកវីដេអូ (No Watermark)
+        </a>
+        <a id="downloadAudioBtn" href="#" target="_blank" download="zhea_gio_audio.mp3"
+          class="w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition">
+          ទាញយកសំឡេង (MP3)
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchVideo() {
+      const urlInput = document.getElementById('tiktokUrl').value.trim();
+      const statusMsg = document.getElementById('statusMessage');
+      const resultBox = document.getElementById('resultBox');
+      const btnFetch = document.getElementById('btnFetch');
+
+      if (!urlInput) {
+        showStatus('សូមបញ្ចូលតំណភ្ជាប់ TikTok ជាមុនសិន!', 'text-red-500');
+        return;
+      }
+
+      btnFetch.disabled = true;
+      btnFetch.innerText = 'កំពុងទាញ...';
+      resultBox.classList.add('hidden');
+      showStatus('កំពុងស្វែងរកវីដេអូ សូមរង់ចាំបន្តិច...', 'text-blue-500');
+
+      try {
+        const response = await fetch('/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: urlInput })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          statusMsg.classList.add('hidden');
+          document.getElementById('videoCover').src = data.cover;
+          document.getElementById('videoAuthor').innerText = '@' + data.author;
+          document.getElementById('videoTitle').innerText = data.title || 'គ្មានចំណងជើង';
+          document.getElementById('downloadVideoBtn').href = data.play;
+          document.getElementById('downloadAudioBtn').href = data.music;
+          resultBox.classList.remove('hidden');
+        } else {
+          showStatus(data.error, 'text-red-500');
+        }
+      } catch (error) {
+        showStatus('មានបញ្ហាក្នុងការតភ្ជាប់ទៅកាន់ Server!', 'text-red-500');
+      } finally {
+        btnFetch.disabled = false;
+        btnFetch.innerText = 'ទាញយក';
+      }
+    }
+
+    function showStatus(text, colorClass) {
+      const statusMsg = document.getElementById('statusMessage');
+      statusMsg.innerText = text;
+      statusMsg.className = `mt-4 text-center text-sm ${colorClass}`;
+      statusMsg.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
